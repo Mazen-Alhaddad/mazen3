@@ -960,6 +960,7 @@ let wrongCount = 0;
 let posErrorCount = 0;
 let meaningEvaluated = false;
 let posAnswered = false;
+let posFirstClickDone = false;
 let deferredPrompt = null;
 
 // ── DOM refs ──
@@ -1087,6 +1088,7 @@ function showWord() {
 
   meaningEvaluated = false;
   posAnswered = false;
+  posFirstClickDone = false;
 
   // Card index & badges
   cardIndex.textContent = `#${currentIndex + 1}`;
@@ -1194,15 +1196,15 @@ function handlePosClick(selected, btn) {
     return;
   }
 
-  // ── كلمة بنوعين: نمنح نقرة ثانية ──
-  if (!btn.dataset.clicked) {
+  // ── كلمة بنوعين ──
+  if (posFirstClickDone === false) {
     // النقرة الأولى
     if (isCorrect) {
       btn.className = 'btn-pos correct';
-      btn.dataset.clicked = 'correct';
-      btn.disabled = true; // أغلق هذا الزر فقط
+      btn.disabled = true;
+      posFirstClickDone = true; // انتظر النقرة الثانية
     } else {
-      // خطأ في النقرة الأولى → أنهِ مباشرة
+      // خطأ في الأولى → أنهِ فوراً
       posAnswered = true;
       btn.className = 'btn-pos wrong';
       posErrorCount++;
@@ -1215,7 +1217,7 @@ function handlePosClick(selected, btn) {
       checkNextReady();
     }
   } else {
-    // النقرة الثانية → أنهِ
+    // النقرة الثانية
     posAnswered = true;
     document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
     if (isCorrect) {
