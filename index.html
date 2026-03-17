@@ -727,7 +727,109 @@
       to   { transform: translateY(10px) scale(0.95); opacity: 0; }
     }
 
-    /* ══════════ INSTALL BANNER ══════════ */
+    /* ══════════ TTS BUTTON ══════════ */
+    .btn-tts {
+      background: var(--bg-elevated);
+      border: 2px solid #4a5568;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin: 8px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+    .btn-tts:hover { border-color: var(--blue); transform: scale(1.1); }
+    .btn-tts.speaking { border-color: var(--green); animation: pulse 0.8s infinite; }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(63,185,80,.4); }
+      50%      { box-shadow: 0 0 0 6px rgba(63,185,80,0); }
+    }
+    .btn-tts.hidden { display: none; }
+
+    /* ══════════ CLICKABLE RESULT BOX ══════════ */
+    .clickable-box {
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .clickable-box:hover { transform: translateY(-2px); border-color: currentColor !important; opacity: 0.85; }
+    .box-hint {
+      font-size: 0.55rem;
+      opacity: 0.6;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 3px;
+    }
+
+    /* ══════════ WRONG LOG ══════════ */
+    .wrong-log {
+      width: 100%;
+      max-width: 420px;
+      background: #0f1623;
+      border: 2px solid #374151;
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+      text-align: right;
+    }
+    .log-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .log-list { display: flex; flex-direction: column; gap: 7px; }
+    .log-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1a2035;
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      gap: 10px;
+    }
+    .log-en {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #f0f6fc;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .log-ar {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+    .log-types {
+      display: flex;
+      gap: 4px;
+    }
+    .log-type-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #8957e5;
+      color: #d2a8ff;
+      background: rgba(137,87,229,.12);
+    }
+    .btn-tts-small {
+      background: none;
+      border: 1px solid #4a5568;
+      border-radius: 50%;
+      width: 26px; height: 26px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-tts-small:hover { border-color: var(--blue); }
     .install-banner {
       display: none;
       align-items: center;
@@ -847,6 +949,9 @@
         <div class="card-body">
           <div class="word-main" id="wordMain">—</div>
           <div class="word-sub" id="wordSub">اضغط للكشف عن المعنى</div>
+          <button class="btn-tts" id="btnTts" title="استمع للنطق">
+            🔊
+          </button>
 
           <div class="translation-block" id="translationBlock">
             <span class="translation-text" id="translationText">—</span>
@@ -897,15 +1002,30 @@
         <div class="result-box-num" id="rCorrect">0</div>
         <div class="result-box-label">عرفتها ✓</div>
       </div>
-      <div class="result-box wrong">
+      <div class="result-box wrong clickable-box" id="boxWrong" title="اضغط لعرض الكلمات">
         <div class="result-box-num" id="rWrong">0</div>
         <div class="result-box-label">لم أعرفها ✗</div>
+        <div class="box-hint">اضغط للتفاصيل</div>
       </div>
-      <div class="result-box pos">
+      <div class="result-box pos clickable-box" id="boxPos" title="اضغط لعرض الكلمات">
         <div class="result-box-num" id="rPos">0</div>
         <div class="result-box-label">خطأ POS ⚠</div>
+        <div class="box-hint">اضغط للتفاصيل</div>
       </div>
     </div>
+
+    <!-- سجل الأخطاء - المعنى -->
+    <div class="wrong-log" id="logWrong" style="display:none;">
+      <div class="log-title">❌ الكلمات التي لم تعرفها</div>
+      <div class="log-list" id="logWrongList"></div>
+    </div>
+
+    <!-- سجل الأخطاء - POS -->
+    <div class="wrong-log" id="logPos" style="display:none;">
+      <div class="log-title">⚠️ أخطاء نوع الكلمة</div>
+      <div class="log-list" id="logPosList"></div>
+    </div>
+
     <button class="btn-restart" id="btnRestart">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
       إعادة المحاولة
@@ -958,6 +1078,8 @@ let isReversed = false;
 let correctCount = 0;
 let wrongCount = 0;
 let posErrorCount = 0;
+let wrongWords = [];
+let posErrorWords = [];
 let meaningEvaluated = false;
 let posAnswered = false;
 let posFirstClickDone = false;
@@ -1022,6 +1144,9 @@ function bindEvents() {
   btnDidnt.addEventListener('click', () => evalMeaning(false));
   btnNext.addEventListener('click', nextWord);
   btnRestart.addEventListener('click', restartQuiz);
+  $('btnTts').addEventListener('click', speakCurrentWord);
+  $('boxWrong').addEventListener('click', () => toggleLog('wrong'));
+  $('boxPos').addEventListener('click',   () => toggleLog('pos'));
 
   // PWA Install
   window.addEventListener('beforeinstallprompt', e => {
@@ -1071,6 +1196,8 @@ function loadWords(data) {
   correctCount = 0;
   wrongCount = 0;
   posErrorCount = 0;
+  wrongWords = [];
+  posErrorWords = [];
   updateStats();
   emptyState.style.display = 'none';
   resultsScreen.classList.remove('show');
@@ -1133,6 +1260,14 @@ function showWord() {
     btn.className = 'btn-pos';
   });
 
+  // TTS - يظهر فقط عند وضع EN→AR (الكلمة إنجليزية)
+  const btnTts = $('btnTts');
+  if (!isReversed) {
+    btnTts.classList.remove('hidden');
+  } else {
+    btnTts.classList.add('hidden');
+  }
+
   // Progress
   progressLabel.textContent = `${currentIndex + 1} / ${words.length}`;
   const pct = ((currentIndex) / words.length) * 100;
@@ -1159,6 +1294,7 @@ function evalMeaning(knew) {
     btnDidnt.disabled = true;
   } else {
     wrongCount++;
+    wrongWords.push(words[currentIndex]);
     btnDidnt.className = 'btn-eval btn-wrong selected';
     btnKnew.disabled = true;
   }
@@ -1186,6 +1322,7 @@ function handlePosClick(selected, btn) {
     } else {
       btn.className = 'btn-pos wrong';
       posErrorCount++;
+      if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
       w.type.forEach(t => {
         const cb = posGrid.querySelector(`[data-pos="${t}"]`);
@@ -1208,6 +1345,7 @@ function handlePosClick(selected, btn) {
       posAnswered = true;
       btn.className = 'btn-pos wrong';
       posErrorCount++;
+      if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
       document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
       w.type.forEach(t => {
@@ -1225,6 +1363,7 @@ function handlePosClick(selected, btn) {
     } else {
       btn.className = 'btn-pos wrong';
       posErrorCount++;
+      if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
       w.type.forEach(t => {
         const cb = posGrid.querySelector(`[data-pos="${t}"]`);
@@ -1282,6 +1421,12 @@ function showResults() {
   progressBlock.style.display = 'none';
   resultsScreen.classList.add('show');
 
+  // Reset logs
+  $('logWrong').style.display = 'none';
+  $('logPos').style.display   = 'none';
+  $('logWrongList').innerHTML = '';
+  $('logPosList').innerHTML   = '';
+
   const total = words.length;
   const pct = Math.round((correctCount / total) * 100);
 
@@ -1336,6 +1481,87 @@ function showToast(msg, type = 'orange') {
     toast.classList.add('hide');
     setTimeout(() => toast.remove(), 300);
   }, 3200);
+}
+
+// ══════════════════════════════
+//  TEXT TO SPEECH
+// ══════════════════════════════
+function speakCurrentWord() {
+  const w = words[currentIndex];
+  if (!w) return;
+  const text = isReversed ? w.en : w.en;
+  speak(text);
+}
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'en-US';
+  utt.rate = 0.9;
+  utt.pitch = 1;
+
+  const btn = $('btnTts');
+  btn.classList.add('speaking');
+  utt.onend = () => btn.classList.remove('speaking');
+  utt.onerror = () => btn.classList.remove('speaking');
+  window.speechSynthesis.speak(utt);
+}
+
+function speakWord(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'en-US';
+  utt.rate = 0.9;
+  window.speechSynthesis.speak(utt);
+}
+
+// ══════════════════════════════
+//  WRONG LOG
+// ══════════════════════════════
+function toggleLog(type) {
+  if (type === 'wrong') {
+    const log = $('logWrong');
+    const isHidden = log.style.display === 'none';
+    log.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) buildLog('wrong');
+  } else {
+    const log = $('logPos');
+    const isHidden = log.style.display === 'none';
+    log.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) buildLog('pos');
+  }
+}
+
+function buildLog(type) {
+  const list = type === 'wrong' ? $('logWrongList') : $('logPosList');
+  const data = type === 'wrong' ? wrongWords : posErrorWords;
+  list.innerHTML = '';
+
+  if (!data.length) {
+    list.innerHTML = `<div style="color:var(--text-muted);font-size:0.78rem;padding:6px;">لا توجد أخطاء 🎉</div>`;
+    return;
+  }
+
+  data.forEach(w => {
+    const item = document.createElement('div');
+    item.className = 'log-item';
+
+    const types = w.type.map(t =>
+      `<span class="log-type-badge">${POS_LABELS[t]?.short || t}</span>`
+    ).join('');
+
+    item.innerHTML = `
+      <div class="log-en">
+        <button class="btn-tts-small" onclick="speakWord('${w.en}')" title="استمع">🔊</button>
+        ${w.en}
+      </div>
+      <div class="log-ar">${w.ar}</div>
+      <div class="log-types">${types}</div>
+    `;
+    list.appendChild(item);
+  });
 }
 
 // ══════════════════════════════
