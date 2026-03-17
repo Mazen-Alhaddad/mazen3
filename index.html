@@ -250,7 +250,7 @@
       padding: 32px 28px;
       position: relative;
       overflow: hidden;
-      transition: border-color var(--transition), transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+
     }
 
     .word-card::before {
@@ -262,7 +262,7 @@
     }
 
     .word-card.slide-out {
-      opacity: 0;
+      visibility: hidden;
     }
 
     .card-header {
@@ -515,7 +515,7 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(135deg, rgba(255,255,255,.1), transparent);
-      opacity: 0;
+      visibility: hidden;
       transition: opacity var(--transition);
     }
 
@@ -1229,13 +1229,7 @@ function nextWord() {
     showResults();
     return;
   }
-
-  // Animate card
-  wordCard.classList.add('slide-out');
-  setTimeout(() => {
-    wordCard.classList.remove('slide-out');
-    showWord();
-  }, 280);
+  showWord();
 }
 
 // ══════════════════════════════
