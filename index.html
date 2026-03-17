@@ -1201,12 +1201,12 @@ function handlePosClick(selected, btn) {
 
   if (isCorrect) {
     btn.className = 'btn-pos correct';
-    // Multi-type toast
+    // Show other types if multi-type word
     if (w.type.length > 1) {
-      const otherTypes = w.type.filter(t => t !== selected).map(t => POS_LABELS[t]?.short || t).join(', ');
-      showToast(`⚠️ هذه الكلمة لها تصنيف آخر: ${otherTypes}`, 'orange');
-    } else {
-      showToast('✅ إجابة صحيحة!', 'green');
+      w.type.forEach(t => {
+        const correctBtn = posGrid.querySelector(`[data-pos="${t}"]`);
+        if (correctBtn) correctBtn.className = 'btn-pos correct';
+      });
     }
   } else {
     btn.className = 'btn-pos wrong';
@@ -1217,7 +1217,6 @@ function handlePosClick(selected, btn) {
       const correctBtn = posGrid.querySelector(`[data-pos="${t}"]`);
       if (correctBtn) correctBtn.className = 'btn-pos correct';
     });
-    showToast(`❌ الصواب: ${w.type.map(t => POS_LABELS[t]?.short || t).join(' / ')}`, 'red');
   }
 
   checkNextReady();
