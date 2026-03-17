@@ -1170,35 +1170,67 @@ function evalMeaning(knew) {
 // ══════════════════════════════
 function handlePosClick(selected, btn) {
   if (posAnswered) return;
-  posAnswered = true;
 
   const w = words[currentIndex];
   const isCorrect = w.type.includes(selected);
+  const isMultiType = w.type.length > 1;
 
-  // Disable all
-  document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
-
-  if (isCorrect) {
-    btn.className = 'btn-pos correct';
-    // Show other types if multi-type word
-    if (w.type.length > 1) {
+  // ── كلمة بنوع واحد: انتهى فوراً ──
+  if (!isMultiType) {
+    posAnswered = true;
+    document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+    if (isCorrect) {
+      btn.className = 'btn-pos correct';
+    } else {
+      btn.className = 'btn-pos wrong';
+      posErrorCount++;
+      updateStats();
       w.type.forEach(t => {
-        const correctBtn = posGrid.querySelector(`[data-pos="${t}"]`);
-        if (correctBtn) correctBtn.className = 'btn-pos correct';
+        const cb = posGrid.querySelector(`[data-pos="${t}"]`);
+        if (cb) cb.className = 'btn-pos correct';
       });
     }
-  } else {
-    btn.className = 'btn-pos wrong';
-    posErrorCount++;
-    updateStats();
-    // Show correct answers
-    w.type.forEach(t => {
-      const correctBtn = posGrid.querySelector(`[data-pos="${t}"]`);
-      if (correctBtn) correctBtn.className = 'btn-pos correct';
-    });
+    checkNextReady();
+    return;
   }
 
-  checkNextReady();
+  // ── كلمة بنوعين: نمنح نقرة ثانية ──
+  if (!btn.dataset.clicked) {
+    // النقرة الأولى
+    if (isCorrect) {
+      btn.className = 'btn-pos correct';
+      btn.dataset.clicked = 'correct';
+      btn.disabled = true; // أغلق هذا الزر فقط
+    } else {
+      // خطأ في النقرة الأولى → أنهِ مباشرة
+      posAnswered = true;
+      btn.className = 'btn-pos wrong';
+      posErrorCount++;
+      updateStats();
+      document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+      w.type.forEach(t => {
+        const cb = posGrid.querySelector(`[data-pos="${t}"]`);
+        if (cb) cb.className = 'btn-pos correct';
+      });
+      checkNextReady();
+    }
+  } else {
+    // النقرة الثانية → أنهِ
+    posAnswered = true;
+    document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+    if (isCorrect) {
+      btn.className = 'btn-pos correct';
+    } else {
+      btn.className = 'btn-pos wrong';
+      posErrorCount++;
+      updateStats();
+      w.type.forEach(t => {
+        const cb = posGrid.querySelector(`[data-pos="${t}"]`);
+        if (cb) cb.className = 'btn-pos correct';
+      });
+    }
+    checkNextReady();
+  }
 }
 
 function checkNextReady() {
