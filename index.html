@@ -55,14 +55,7 @@
 
     /* ── Background mesh ── */
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 60% at 15% 10%, rgba(88,166,255,.06) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 85% 80%, rgba(188,140,255,.05) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
+      display: none;
     }
 
     /* ── Grid overlay ── */
@@ -269,7 +262,6 @@
     }
 
     .word-card.slide-out {
-      transform: translateX(-30px) scale(0.97);
       opacity: 0;
     }
 
