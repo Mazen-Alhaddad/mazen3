@@ -729,25 +729,26 @@
 
     /* ══════════ TTS BUTTON ══════════ */
     .btn-tts {
-      background: var(--bg-elevated);
+      background: #1e2736;
       border: 2px solid #4a5568;
       border-radius: 50%;
-      width: 40px; height: 40px;
-      font-size: 1.1rem;
+      width: 42px; height: 42px;
+      font-size: 1.2rem;
       cursor: pointer;
-      margin: 8px auto 0;
-      display: flex;
+      margin: 10px auto 4px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       transition: all var(--transition);
+      line-height: 1;
     }
-    .btn-tts:hover { border-color: var(--blue); transform: scale(1.1); }
+    .btn-tts:hover { border-color: var(--blue); transform: scale(1.12); background: rgba(121,184,255,.1); }
     .btn-tts.speaking { border-color: var(--green); animation: pulse 0.8s infinite; }
     @keyframes pulse {
       0%,100% { box-shadow: 0 0 0 0 rgba(63,185,80,.4); }
       50%      { box-shadow: 0 0 0 6px rgba(63,185,80,0); }
     }
-    .btn-tts.hidden { display: none; }
+    .btn-tts.hidden { display: none !important; }
 
     /* ══════════ CLICKABLE RESULT BOX ══════════ */
     .clickable-box {
@@ -1333,43 +1334,47 @@ function handlePosClick(selected, btn) {
     return;
   }
 
-  // ── كلمة بنوعين ──
-  if (posFirstClickDone === false) {
-    // النقرة الأولى
+  // ── كلمة بنوعين: نقرتان دائماً ──
+  if (!posFirstClickDone) {
+    // ── النقرة الأولى ──
+    posFirstClickDone = true;
+    btn.disabled = true; // أغلق هذا الزر فقط
+
     if (isCorrect) {
       btn.className = 'btn-pos correct';
-      btn.disabled = true;
-      posFirstClickDone = true; // انتظر النقرة الثانية
+      // لا تُظهر شيئاً — انتظر النقرة الثانية
     } else {
-      // خطأ في الأولى → أنهِ فوراً
-      posAnswered = true;
       btn.className = 'btn-pos wrong';
+      // سجّل الخطأ لكن لا تنهِ — انتظر النقرة الثانية
       posErrorCount++;
       if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
-      document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
-      w.type.forEach(t => {
-        const cb = posGrid.querySelector(`[data-pos="${t}"]`);
-        if (cb) cb.className = 'btn-pos correct';
-      });
-      checkNextReady();
     }
+
   } else {
-    // النقرة الثانية
+    // ── النقرة الثانية → أنهِ وأظهر النتيجة ──
     posAnswered = true;
-    document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+    btn.disabled = true;
+
     if (isCorrect) {
       btn.className = 'btn-pos correct';
     } else {
       btn.className = 'btn-pos wrong';
-      posErrorCount++;
-      if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
-      updateStats();
-      w.type.forEach(t => {
-        const cb = posGrid.querySelector(`[data-pos="${t}"]`);
-        if (cb) cb.className = 'btn-pos correct';
-      });
+      // لا تضيف خطأ مكرر إن كان الخطأ الأول سجّله
+      if (!posErrorWords.find(x => x.en === w.en)) {
+        posErrorCount++;
+        posErrorWords.push(w);
+        updateStats();
+      }
     }
+
+    // أغلق باقي الأزرار وأظهر الصحيحة
+    document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+    w.type.forEach(t => {
+      const cb = posGrid.querySelector(`[data-pos="${t}"]`);
+      if (cb && cb.className === 'btn-pos') cb.className = 'btn-pos correct';
+    });
+
     checkNextReady();
   }
 }
