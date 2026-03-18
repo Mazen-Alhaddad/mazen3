@@ -483,6 +483,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-top: 10px;
       margin-bottom: 10px;
       gap: 8px;
     }
@@ -952,18 +953,6 @@
   <!-- QUIZ AREA -->
   <div id="quizArea" style="display:none;">
 
-    <!-- TOP NAV: السابقة / التالية -->
-    <div class="top-nav" id="topNav" style="display:none;">
-      <button class="btn-top-nav" id="btnPrev" disabled>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
-        السابقة
-      </button>
-      <span class="top-nav-index" id="topNavIndex">1 / 1</span>
-      <button class="btn-top-nav btn-top-next" id="btnTopNext" disabled>
-        التالية
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
-      </button>
-    </div>
     <div class="card-container">
       <div class="word-card" id="wordCard">
         <div class="card-header">
@@ -975,7 +964,7 @@
             <div class="word-main" id="wordMain">—</div>
             <button class="btn-tts" id="btnTts" title="استمع للنطق" style="display:none;">🔊</button>
           </div>
-          <div class="word-sub" id="wordSub">اضغط للكشف عن المعنى</div>
+          <div class="word-sub" id="wordSub">اضغط للكشف • أو أجب مباشرة</div>
 
           <div class="translation-block" id="translationBlock">
             <span class="translation-text" id="translationText">—</span>
@@ -983,11 +972,11 @@
           </div>
 
           <div class="meaning-eval">
-            <button class="btn-eval btn-correct" id="btnKnew" disabled>
+            <button class="btn-eval btn-correct" id="btnKnew">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>
               عرفتها
             </button>
-            <button class="btn-eval btn-wrong" id="btnDidnt" disabled>
+            <button class="btn-eval btn-wrong" id="btnDidnt">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
               لم أعرفها
             </button>
@@ -1002,6 +991,19 @@
         <div class="pos-title">نوع الكلمة <strong>Part of Speech</strong></div>
       </div>
       <div class="pos-grid" id="posGrid"></div>
+    </div>
+
+    <!-- BOTTOM NAV: السابقة / التالية -->
+    <div class="top-nav" id="topNav" style="display:none;">
+      <button class="btn-top-nav btn-top-next" id="btnTopNext" disabled>
+        التالية
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+      </button>
+      <span class="top-nav-index" id="topNavIndex">1 / 1</span>
+      <button class="btn-top-nav" id="btnPrev" disabled>
+        السابقة
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+      </button>
     </div>
 
   </div>
