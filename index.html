@@ -293,7 +293,7 @@
 
     .word-main {
       font-family: 'JetBrains Mono', monospace;
-      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-size: clamp(2rem, 6vw, 3rem);
       font-weight: 700;
       color: var(--text-primary);
       letter-spacing: -0.01em;
@@ -1004,14 +1004,14 @@
 
     <!-- BOTTOM NAV: السابقة / التالية -->
     <div class="top-nav" id="topNav" style="display:none;">
+      <button class="btn-top-nav" id="btnPrev" disabled>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+        السابقة
+      </button>
+      <span class="top-nav-index" id="topNavIndex">1 / 1</span>
       <button class="btn-top-nav btn-top-next" id="btnTopNext" disabled>
         التالية
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
-      </button>
-      <span class="top-nav-index" id="topNavIndex">1 / 1</span>
-      <button class="btn-top-nav" id="btnPrev" disabled>
-        السابقة
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
       </button>
     </div>
 
