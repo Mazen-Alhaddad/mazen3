@@ -44,13 +44,14 @@
       font-family: 'Noto Kufi Arabic', sans-serif;
       background: var(--bg-base);
       color: var(--text-primary);
-      min-height: 100dvh;
+      height: 100dvh;
+      max-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 16px 40px;
+      padding: 0 12px;
       position: relative;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     /* ── Background mesh ── */
@@ -67,14 +68,22 @@
       max-width: 680px;
       position: relative;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
     }
+    .app-wrap::-webkit-scrollbar { display: none; }
 
     /* ══════════ HEADER ══════════ */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 28px 0 20px;
+      padding: 10px 0 8px;
       gap: 12px;
     }
 
@@ -179,7 +188,7 @@
 
     /* ══════════ PROGRESS ══════════ */
     .progress-block {
-      margin-bottom: 18px;
+      margin-bottom: 8px;
     }
 
     .progress-meta {
@@ -231,14 +240,14 @@
     /* ══════════ WORD CARD ══════════ */
     .card-container {
       perspective: 1200px;
-      margin-bottom: 18px;
+      margin-bottom: 8px;
     }
 
     .word-card {
       background: #0f1623;
       border: 3px solid #374151;
       border-radius: var(--radius);
-      padding: 32px 28px;
+      padding: 14px 20px;
       position: relative;
       overflow: hidden;
 
@@ -256,7 +265,7 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
     }
 
     .card-index {
@@ -279,12 +288,12 @@
 
     .card-body {
       text-align: center;
-      padding: 10px 0;
+      padding: 4px 0;
     }
 
     .word-main {
       font-family: 'JetBrains Mono', monospace;
-      font-size: clamp(2rem, 6vw, 3rem);
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
       font-weight: 700;
       color: var(--text-primary);
       letter-spacing: -0.01em;
@@ -301,7 +310,7 @@
       font-size: 0.78rem;
       color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace;
-      margin-bottom: 22px;
+      margin-bottom: 10px;
     }
 
     /* Translation reveal */
@@ -312,7 +321,7 @@
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 12px 20px;
+      padding: 8px 16px;
       cursor: pointer;
       transition: all var(--transition);
       user-select: none;
@@ -344,7 +353,7 @@
     .meaning-eval {
       display: flex;
       gap: 10px;
-      margin-top: 22px;
+      margin-top: 10px;
       justify-content: center;
     }
 
@@ -404,15 +413,15 @@
       background: #111827;
       border: 1px solid #374151;
       border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 18px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
     }
 
     .pos-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
 
     .pos-title {
@@ -427,11 +436,11 @@
     .pos-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 5px;
     }
 
     .btn-pos {
-      padding: 12px 4px;
+      padding: 8px 4px;
       border-radius: var(--radius-sm);
       border: 2px solid #4a5568;
       background: #1a2035;
@@ -483,8 +492,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 10px;
-      margin-bottom: 10px;
+      margin-top: 8px;
+      margin-bottom: 4px;
       gap: 8px;
     }
     .btn-top-nav {
@@ -494,7 +503,7 @@
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 9px 16px;
+      padding: 8px 14px;
       color: var(--text-secondary);
       font-family: 'Noto Kufi Arabic', sans-serif;
       font-size: 0.82rem;
@@ -508,7 +517,7 @@
       background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim));
       border-color: transparent;
       color: #fff;
-      padding: 9px 20px;
+      padding: 8px 18px;
       font-weight: 700;
     }
     .btn-top-next:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(88,166,255,.3); border-color: transparent; color: #fff; background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim)); }
