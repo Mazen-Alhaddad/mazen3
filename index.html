@@ -367,6 +367,7 @@
     }
 
     .btn-eval:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-eval.selected:disabled { opacity: 1 !important; cursor: default; }
 
     .btn-correct {
       border: 3px solid #3fb950;
@@ -374,12 +375,13 @@
       background: rgba(63,185,80,.10);
     }
     .btn-correct:hover:not(:disabled) { background: rgba(63,185,80,.22); }
-    .btn-correct.selected {
-      background: rgba(63,185,80,.82);
-      border: 3px solid #3fb950;
-      color: #fff;
+    .btn-correct.selected,
+    .btn-correct.selected:disabled {
+      background: rgba(63,185,80,.85) !important;
+      border: 3px solid #3fb950 !important;
+      color: #fff !important;
       text-shadow: 0 1px 3px rgba(0,0,0,.4);
-      box-shadow: 0 0 16px rgba(63,185,80,.45);
+      box-shadow: 0 0 16px rgba(63,185,80,.5);
     }
 
     .btn-wrong {
@@ -388,12 +390,13 @@
       background: rgba(232,121,249,.10);
     }
     .btn-wrong:hover:not(:disabled) { background: rgba(232,121,249,.22); }
-    .btn-wrong.selected {
-      background: rgba(232,121,249,.82);
-      border: 3px solid #e879f9;
-      color: #fff;
+    .btn-wrong.selected,
+    .btn-wrong.selected:disabled {
+      background: rgba(232,121,249,.85) !important;
+      border: 3px solid #e879f9 !important;
+      color: #fff !important;
       text-shadow: 0 1px 3px rgba(0,0,0,.4);
-      box-shadow: 0 0 16px rgba(232,121,249,.45);
+      box-shadow: 0 0 16px rgba(232,121,249,.5);
     }
 
     /* ══════════ POS SECTION ══════════ */
@@ -952,13 +955,13 @@
     <!-- TOP NAV: السابقة / التالية -->
     <div class="top-nav" id="topNav" style="display:none;">
       <button class="btn-top-nav" id="btnPrev" disabled>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
         السابقة
       </button>
       <span class="top-nav-index" id="topNavIndex">1 / 1</span>
       <button class="btn-top-nav btn-top-next" id="btnTopNext" disabled>
         التالية
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
       </button>
     </div>
     <div class="card-container">
@@ -1261,7 +1264,7 @@ function showWord() {
   } else {
     wordMain.textContent = w.en;
     wordMain.className = 'word-main';
-    wordSub.textContent = 'اضغط للكشف عن المعنى';
+    wordSub.textContent = 'اضغط للكشف • أو أجب مباشرة';
     translationText.className = 'translation-text';
     translationText.textContent = w.ar;
   }
@@ -1269,10 +1272,10 @@ function showWord() {
   // Reset translation
   translationBlock.classList.remove('revealed');
 
-  // Reset eval buttons
-  btnKnew.disabled = true;
+  // Reset eval buttons - متاحة من البداية
+  btnKnew.disabled = false;
   btnKnew.className = 'btn-eval btn-correct';
-  btnDidnt.disabled = true;
+  btnDidnt.disabled = false;
   btnDidnt.className = 'btn-eval btn-wrong';
 
   btnPrev.disabled = currentIndex === 0;
@@ -1344,10 +1347,7 @@ function showWord() {
 }
 
 function revealTranslation() {
-  if (translationBlock.classList.contains('revealed')) return;
   translationBlock.classList.add('revealed');
-  btnKnew.disabled = false;
-  btnDidnt.disabled = false;
 }
 
 // ══════════════════════════════
@@ -1357,14 +1357,21 @@ function evalMeaning(knew) {
   if (meaningEvaluated) return;
   meaningEvaluated = true;
 
+  // كشف الترجمة تلقائياً عند الإجابة
+  translationBlock.classList.add('revealed');
+
   if (knew) {
     correctCount++;
     btnKnew.className = 'btn-eval btn-correct selected';
+    btnKnew.disabled = true;
+    btnDidnt.className = 'btn-eval btn-wrong';
     btnDidnt.disabled = true;
   } else {
     wrongCount++;
     wrongWords.push(words[currentIndex]);
     btnDidnt.className = 'btn-eval btn-wrong selected';
+    btnDidnt.disabled = true;
+    btnKnew.className = 'btn-eval btn-correct';
     btnKnew.disabled = true;
   }
 
