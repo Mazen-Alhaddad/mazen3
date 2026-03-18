@@ -423,7 +423,7 @@
 
     .pos-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
 
@@ -475,8 +475,40 @@
       margin-top: 3px;
     }
 
-    /* ══════════ NEXT BUTTON ══════════ */
-    .btn-next {
+    /* ══════════ TOP NAV ══════════ */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .btn-top-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      color: var(--text-secondary);
+      font-family: 'Noto Kufi Arabic', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-top-nav:hover:not(:disabled) { border-color: var(--purple); color: var(--purple); background: rgba(210,168,255,.07); }
+    .btn-top-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-top-next:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); background: rgba(121,184,255,.07); }
+    .top-nav-index {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ══════════ BIG NEXT BUTTON ══════════ */
+    .btn-next-main {
       width: 100%;
       padding: 14px;
       background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim));
@@ -492,25 +524,9 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      letter-spacing: 0.02em;
-      position: relative;
-      overflow: hidden;
     }
-
-    .btn-next::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,.1), transparent);
-      visibility: hidden;
-      transition: opacity var(--transition);
-    }
-
-    .btn-next:hover:not(:disabled)::before { opacity: 1; }
-    .btn-next:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(88,166,255,.25); }
-    .btn-next:active:not(:disabled) { transform: translateY(0); }
-
-    .btn-next:disabled {
+    .btn-next-main:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(88,166,255,.25); }
+    .btn-next-main:disabled {
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       color: var(--text-muted);
@@ -728,18 +744,25 @@
     }
 
     /* ══════════ TTS BUTTON ══════════ */
+    .word-main-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
     .btn-tts {
       background: #1e2736;
       border: 2px solid #5a6478;
       border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      font-size: 1.3rem;
+      width: 38px;
+      height: 38px;
+      font-size: 1rem;
       cursor: pointer;
-      display: block;
-      margin: 10px auto 6px;
-      line-height: 44px;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
       transition: all var(--transition);
     }
     .btn-tts:hover { border-color: var(--blue); transform: scale(1.12); background: rgba(121,184,255,.12); }
@@ -862,7 +885,7 @@
 
     /* ══════════ RESPONSIVE ══════════ */
     @media (max-width: 420px) {
-      .pos-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+      .pos-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
       .btn-pos { padding: 8px 2px; font-size: 0.72rem; }
       .results-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
       header { padding: 18px 0 14px; }
@@ -939,7 +962,18 @@
   <!-- QUIZ AREA -->
   <div id="quizArea" style="display:none;">
 
-    <!-- WORD CARD -->
+    <!-- TOP NAV: السابقة / التالية -->
+    <div class="top-nav" id="topNav" style="display:none;">
+      <button class="btn-top-nav" id="btnPrev" disabled>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+        السابقة
+      </button>
+      <span class="top-nav-index" id="topNavIndex">1 / 1</span>
+      <button class="btn-top-nav btn-top-next" id="btnTopNext" disabled>
+        التالية
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+      </button>
+    </div>
     <div class="card-container">
       <div class="word-card" id="wordCard">
         <div class="card-header">
@@ -947,11 +981,11 @@
           <div class="card-type-badges" id="cardBadges"></div>
         </div>
         <div class="card-body">
-          <div class="word-main" id="wordMain">—</div>
+          <div class="word-main-row">
+            <div class="word-main" id="wordMain">—</div>
+            <button class="btn-tts" id="btnTts" title="استمع للنطق" style="display:none;">🔊</button>
+          </div>
           <div class="word-sub" id="wordSub">اضغط للكشف عن المعنى</div>
-          <button class="btn-tts" id="btnTts" title="استمع للنطق">
-            🔊
-          </button>
 
           <div class="translation-block" id="translationBlock">
             <span class="translation-text" id="translationText">—</span>
@@ -981,9 +1015,9 @@
     </div>
 
     <!-- NEXT BUTTON -->
-    <button class="btn-next" id="btnNext" disabled>
+    <button class="btn-next-main" id="btnNext" disabled>
       الكلمة التالية
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="transform:scaleX(-1);"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
     </button>
 
   </div>
@@ -1050,7 +1084,8 @@ const POS_LABELS = {
   adv:  { short: 'adv',  full: 'Adverb' },
   n:    { short: 'n',    full: 'Noun' },
   prep: { short: 'prep', full: 'Preposition' },
-  conj: { short: 'conj', full: 'Conjunction' }
+  conj: { short: 'conj', full: 'Conjunction' },
+  pron: { short: 'pron', full: 'Pronoun' }
 };
 
 const SAMPLE_DATA = [
@@ -1106,6 +1141,10 @@ const btnKnew        = $('btnKnew');
 const btnDidnt       = $('btnDidnt');
 const posGrid        = $('posGrid');
 const btnNext        = $('btnNext');
+const btnPrev        = $('btnPrev');
+const btnTopNext     = $('btnTopNext');
+const topNav         = $('topNav');
+const topNavIndex    = $('topNavIndex');
 const toggleReverse  = $('toggleReverse');
 const toggleLabel    = $('toggleLabel');
 const fileInput      = $('fileInput');
@@ -1143,6 +1182,8 @@ function bindEvents() {
   btnKnew.addEventListener('click', () => evalMeaning(true));
   btnDidnt.addEventListener('click', () => evalMeaning(false));
   btnNext.addEventListener('click', nextWord);
+  btnPrev.addEventListener('click', prevWord);
+  btnTopNext.addEventListener('click', nextWord);
   btnRestart.addEventListener('click', restartQuiz);
   $('btnTts').addEventListener('click', speakCurrentWord);
   $('boxWrong').addEventListener('click', () => toggleLog('wrong'));
@@ -1253,6 +1294,12 @@ function showWord() {
   btnDidnt.disabled = true;
   btnDidnt.className = 'btn-eval btn-wrong';
   btnNext.disabled = true;
+  btnPrev.disabled = currentIndex === 0;
+  btnTopNext.disabled = true;
+
+  // Show top nav after first word loaded
+  topNav.style.display = 'flex';
+  topNavIndex.textContent = `${currentIndex + 1} / ${words.length}`;
 
   // Reset POS buttons
   document.querySelectorAll('.btn-pos').forEach(btn => {
@@ -1376,6 +1423,7 @@ function handlePosClick(selected, btn) {
 function checkNextReady() {
   if (meaningEvaluated && posAnswered) {
     btnNext.disabled = false;
+    btnTopNext.disabled = false;
   }
 }
 
@@ -1388,6 +1436,12 @@ function nextWord() {
     showResults();
     return;
   }
+  showWord();
+}
+
+function prevWord() {
+  if (currentIndex <= 0) return;
+  currentIndex--;
   showWord();
 }
 
@@ -1418,6 +1472,7 @@ function toggleReverseMode() {
 function showResults() {
   quizArea.style.display = 'none';
   progressBlock.style.display = 'none';
+  topNav.style.display = 'none';
   resultsScreen.classList.add('show');
 
   // Reset logs
