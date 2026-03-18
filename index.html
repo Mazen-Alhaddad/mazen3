@@ -490,49 +490,36 @@
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 7px 14px;
+      padding: 9px 16px;
       color: var(--text-secondary);
       font-family: 'Noto Kufi Arabic', sans-serif;
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       transition: all var(--transition);
     }
     .btn-top-nav:hover:not(:disabled) { border-color: var(--purple); color: var(--purple); background: rgba(210,168,255,.07); }
     .btn-top-nav:disabled { opacity: 0.3; cursor: not-allowed; }
-    .btn-top-next:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); background: rgba(121,184,255,.07); }
+    .btn-top-next {
+      background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim));
+      border-color: transparent;
+      color: #fff;
+      padding: 9px 20px;
+      font-weight: 700;
+    }
+    .btn-top-next:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(88,166,255,.3); border-color: transparent; color: #fff; background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim)); }
+    .btn-top-next:disabled {
+      background: var(--bg-elevated) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text-muted) !important;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
     .top-nav-index {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.75rem;
       color: var(--text-muted);
-    }
-
-    /* ══════════ BIG NEXT BUTTON ══════════ */
-    .btn-next-main {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim));
-      border: none;
-      border-radius: var(--radius);
-      color: #fff;
-      font-family: 'Noto Kufi Arabic', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .btn-next-main:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(88,166,255,.25); }
-    .btn-next-main:disabled {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
     }
 
     /* ══════════ EMPTY STATE ══════════ */
@@ -1014,12 +1001,6 @@
       <div class="pos-grid" id="posGrid"></div>
     </div>
 
-    <!-- NEXT BUTTON -->
-    <button class="btn-next-main" id="btnNext" disabled>
-      الكلمة التالية
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
-    </button>
-
   </div>
 
   <!-- RESULTS -->
@@ -1115,6 +1096,7 @@ let wrongCount = 0;
 let posErrorCount = 0;
 let wrongWords = [];
 let posErrorWords = [];
+let answersCache = {}; // { index: { knew, posSelected, posAnswered } }
 let meaningEvaluated = false;
 let posAnswered = false;
 let posFirstClickDone = false;
@@ -1140,7 +1122,6 @@ const translationText  = $('translationText');
 const btnKnew        = $('btnKnew');
 const btnDidnt       = $('btnDidnt');
 const posGrid        = $('posGrid');
-const btnNext        = $('btnNext');
 const btnPrev        = $('btnPrev');
 const btnTopNext     = $('btnTopNext');
 const topNav         = $('topNav');
@@ -1181,7 +1162,6 @@ function bindEvents() {
   translationBlock.addEventListener('click', revealTranslation);
   btnKnew.addEventListener('click', () => evalMeaning(true));
   btnDidnt.addEventListener('click', () => evalMeaning(false));
-  btnNext.addEventListener('click', nextWord);
   btnPrev.addEventListener('click', prevWord);
   btnTopNext.addEventListener('click', nextWord);
   btnRestart.addEventListener('click', restartQuiz);
@@ -1239,6 +1219,7 @@ function loadWords(data) {
   posErrorCount = 0;
   wrongWords = [];
   posErrorWords = [];
+  answersCache = {};
   updateStats();
   emptyState.style.display = 'none';
   resultsScreen.classList.remove('show');
@@ -1293,11 +1274,11 @@ function showWord() {
   btnKnew.className = 'btn-eval btn-correct';
   btnDidnt.disabled = true;
   btnDidnt.className = 'btn-eval btn-wrong';
-  btnNext.disabled = true;
+
   btnPrev.disabled = currentIndex === 0;
   btnTopNext.disabled = true;
 
-  // Show top nav after first word loaded
+  // Show top nav
   topNav.style.display = 'flex';
   topNavIndex.textContent = `${currentIndex + 1} / ${words.length}`;
 
@@ -1307,8 +1288,54 @@ function showWord() {
     btn.className = 'btn-pos';
   });
 
-  // TTS - يظهر فقط عند وضع EN→AR
-  $('btnTts').style.display = isReversed ? 'none' : 'block';
+  // ── استعادة الإجابة السابقة من الكاش ──
+  const cached = answersCache[currentIndex];
+  if (cached) {
+    // استعادة المعنى
+    if (cached.knew !== undefined) {
+      meaningEvaluated = true;
+      translationBlock.classList.add('revealed');
+      if (cached.knew) {
+        btnKnew.className = 'btn-eval btn-correct selected';
+        btnKnew.disabled = false;
+        btnDidnt.disabled = true;
+      } else {
+        btnDidnt.className = 'btn-eval btn-wrong selected';
+        btnDidnt.disabled = false;
+        btnKnew.disabled = true;
+      }
+      btnKnew.disabled = true;
+      btnDidnt.disabled = true;
+    }
+
+    // استعادة POS
+    if (cached.posSelected !== undefined) {
+      posAnswered = true;
+      const w2 = words[currentIndex];
+      document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+      // أظهر الإجابة المختارة
+      const selectedBtn = posGrid.querySelector(`[data-pos="${cached.posSelected}"]`);
+      if (selectedBtn) selectedBtn.className = cached.posCorrect ? 'btn-pos correct' : 'btn-pos wrong';
+      // أظهر الإجابات الصحيحة
+      w2.type.forEach(t => {
+        const cb = posGrid.querySelector(`[data-pos="${t}"]`);
+        if (cb && cb.className === 'btn-pos') cb.className = 'btn-pos correct';
+      });
+      // أظهر النقرة الأولى في حالة النوعين
+      if (cached.firstClick) {
+        const fc = posGrid.querySelector(`[data-pos="${cached.firstClick.pos}"]`);
+        if (fc) fc.className = cached.firstClick.correct ? 'btn-pos correct' : 'btn-pos wrong';
+      }
+    }
+
+    // إذا اكتملت الإجابتان → فعّل زر التالية
+    if (cached.knew !== undefined && cached.posSelected !== undefined) {
+      btnTopNext.disabled = false;
+    }
+  }
+
+  // TTS
+  $('btnTts').style.display = isReversed ? 'none' : 'flex';
 
   // Progress
   progressLabel.textContent = `${currentIndex + 1} / ${words.length}`;
@@ -1341,13 +1368,19 @@ function evalMeaning(knew) {
     btnKnew.disabled = true;
   }
 
+  // حفظ الإجابة في الكاش
+  if (!answersCache[currentIndex]) answersCache[currentIndex] = {};
+  answersCache[currentIndex].knew = knew;
+
   updateStats();
   checkNextReady();
 }
 
-// ══════════════════════════════
-//  POS HANDLING
-// ══════════════════════════════
+function savePosToCache(selectedPos, isCorrect) {
+  if (!answersCache[currentIndex]) answersCache[currentIndex] = {};
+  answersCache[currentIndex].posSelected = selectedPos;
+  answersCache[currentIndex].posCorrect  = isCorrect;
+}
 function handlePosClick(selected, btn) {
   if (posAnswered) return;
 
@@ -1371,58 +1404,53 @@ function handlePosClick(selected, btn) {
         if (cb) cb.className = 'btn-pos correct';
       });
     }
+    savePosToCache(selected, isCorrect);
     checkNextReady();
     return;
   }
 
   // ── كلمة بنوعين: نقرتان دائماً ──
   if (!posFirstClickDone) {
-    // ── النقرة الأولى ──
     posFirstClickDone = true;
-    btn.disabled = true; // أغلق هذا الزر فقط
-
+    btn.disabled = true;
     if (isCorrect) {
       btn.className = 'btn-pos correct';
-      // لا تُظهر شيئاً — انتظر النقرة الثانية
     } else {
       btn.className = 'btn-pos wrong';
-      // سجّل الخطأ لكن لا تنهِ — انتظر النقرة الثانية
       posErrorCount++;
       if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
     }
+    // احفظ النقرة الأولى مبدئياً
+    if (!answersCache[currentIndex]) answersCache[currentIndex] = {};
+    answersCache[currentIndex].firstClick = { pos: selected, correct: isCorrect };
 
   } else {
-    // ── النقرة الثانية → أنهِ وأظهر النتيجة ──
     posAnswered = true;
     btn.disabled = true;
-
     if (isCorrect) {
       btn.className = 'btn-pos correct';
     } else {
       btn.className = 'btn-pos wrong';
-      // لا تضيف خطأ مكرر إن كان الخطأ الأول سجّله
       if (!posErrorWords.find(x => x.en === w.en)) {
         posErrorCount++;
         posErrorWords.push(w);
         updateStats();
       }
     }
-
-    // أغلق باقي الأزرار وأظهر الصحيحة
     document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
     w.type.forEach(t => {
       const cb = posGrid.querySelector(`[data-pos="${t}"]`);
       if (cb && cb.className === 'btn-pos') cb.className = 'btn-pos correct';
     });
-
+    savePosToCache(selected, isCorrect);
     checkNextReady();
   }
 }
 
 function checkNextReady() {
   if (meaningEvaluated && posAnswered) {
-    btnNext.disabled = false;
+
     btnTopNext.disabled = false;
   }
 }
