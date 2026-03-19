@@ -124,6 +124,12 @@
       gap: 10px;
     }
 
+    .toggles-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
     /* ── Reverse toggle ── */
     .toggle-wrap {
       display: flex;
@@ -477,6 +483,11 @@
       color: #fff;
       text-shadow: 0 1px 4px rgba(0,0,0,.5);
       box-shadow: 0 0 12px rgba(232,121,249,.45);
+    }
+    .btn-pos.wrong-prev {
+      background: rgba(232,121,249,.30);
+      border: 2px solid #e879f9;
+      color: #e879f9;
     }
 
     .btn-pos .pos-full {
@@ -966,9 +977,15 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="toggle-wrap" id="toggleReverse" title="عكس الاتجاه">
-        <div class="toggle-switch"></div>
-        <span class="toggle-label" id="toggleLabel">EN→AR</span>
+      <div class="toggles-stack">
+        <div class="toggle-wrap" id="toggleReverse" title="عكس الاتجاه">
+          <div class="toggle-switch"></div>
+          <span class="toggle-label" id="toggleLabel">EN→AR</span>
+        </div>
+        <div class="toggle-wrap active" id="toggleEdit" title="وضع التعديل">
+          <div class="toggle-switch"></div>
+          <span class="toggle-label">تعديل</span>
+        </div>
       </div>
       <label class="btn-file" for="fileInput" title="تحميل ملف JSON">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -1166,6 +1183,7 @@ let meaningEvaluated = false;
 let posAnswered = false;
 let posFirstClickDone = false;
 let isRevisiting = false;
+let editMode = true; // وضع التعديل — مفعّل افتراضياً
 let deferredPrompt = null;
 
 // ── DOM refs ──
@@ -1240,6 +1258,7 @@ function bindEvents() {
   fileInput.addEventListener('change', handleFileUpload);
   btnSample.addEventListener('click', () => loadWords(SAMPLE_DATA));
   toggleReverse.addEventListener('click', toggleReverseMode);
+  $('toggleEdit').addEventListener('click', toggleEditMode);
   translationBlock.addEventListener('click', revealTranslation);
   btnKnew.addEventListener('click', () => evalMeaning(true));
   btnDidnt.addEventListener('click', () => evalMeaning(false));
@@ -1563,8 +1582,9 @@ function handlePosClick(selected, btn) {
   const isCorrect = w.type.includes(selected);
   const isMultiType = w.type.length > 1;
 
-  // ── إذا أجاب مسبقاً → أعد تصفير وابدأ من جديد (تغيير الإجابة) ──
+  // ── إذا أجاب مسبقاً وكان التعديل مفعّلاً ──
   if (posAnswered) {
+    if (!editMode) return; // التعديل مغلق
     // تراجع عن الخطأ السابق
     if (answersCache[currentIndex]?.posCorrect === false) {
       posErrorCount = Math.max(0, posErrorCount - 1);
@@ -1578,30 +1598,34 @@ function handlePosClick(selected, btn) {
       delete answersCache[currentIndex].posCorrect;
       delete answersCache[currentIndex].firstClick;
     }
-    resetPosButtons();
+    // أبقِ الخاطئة السابقة ظاهرة بلون مخفف
+    const prevSelected = posGrid.querySelector('.btn-pos.wrong, .btn-pos.correct');
+    document.querySelectorAll('.btn-pos').forEach(b => {
+      if (b.classList.contains('wrong')) {
+        b.className = 'btn-pos wrong-prev';
+        b.disabled = false;
+      } else {
+        b.className = 'btn-pos';
+        b.disabled = false;
+      }
+    });
   }
 
   // ── كلمة بنوع واحد ──
   if (!isMultiType) {
     posAnswered = true;
-    // لون الزر المختار فقط — لا نعطّل بقية الأزرار لإتاحة التغيير
-    document.querySelectorAll('.btn-pos').forEach(b => {
-      b.disabled = false;
-      if (b.dataset.pos !== selected) b.className = 'btn-pos';
-    });
-    if (isCorrect) {
-      btn.className = 'btn-pos correct';
-    } else {
-      btn.className = 'btn-pos wrong';
+    // ألوّن الزر المختار فوراً
+    btn.className = isCorrect ? 'btn-pos correct' : 'btn-pos wrong';
+    if (!isCorrect) {
       posErrorCount++;
       if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
-      // أظهر الصحيح
-      w.type.forEach(t => {
-        const cb = posGrid.querySelector(`[data-pos="${t}"]`);
-        if (cb) cb.className = 'btn-pos correct';
-      });
     }
+    // أزرار أخرى: أبقِها مفعّلة إذا كان التعديل مفعّلاً
+    document.querySelectorAll('.btn-pos').forEach(b => {
+      if (b.dataset.pos === selected) return;
+      if (!editMode) b.disabled = true;
+    });
     savePosToCache(selected, isCorrect);
     checkNextReady();
     saveState();
@@ -1681,6 +1705,16 @@ function updateStats() {
 // ══════════════════════════════
 //  REVERSE MODE
 // ══════════════════════════════
+function toggleEditMode() {
+  editMode = !editMode;
+  const el = $('toggleEdit');
+  el.classList.toggle('active', editMode);
+  // إذا أُغلق وضع التعديل → أغلق أزرار POS الحالية إن كانت مجابة
+  if (!editMode && posAnswered) {
+    document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+  }
+}
+
 function toggleReverseMode() {
   isReversed = !isReversed;
   toggleReverse.classList.toggle('active', isReversed);
