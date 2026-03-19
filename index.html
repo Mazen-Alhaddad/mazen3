@@ -1558,34 +1558,37 @@ function resetPosButtons() {
 
 function handlePosClick(selected, btn) {
   if (isRevisiting) return; // مقفل على البطاقات السابقة
-  if (posAnswered) {
-    // السماح بتغيير الإجابة — أعد تصفير ثم أعد الإجابة
-    const w = words[currentIndex];
-
-    // تراجع عن الخطأ السابق إن وجد
-    if (answersCache[currentIndex]?.posCorrect === false) {
-      posErrorCount = Math.max(0, posErrorCount - 1);
-      posErrorWords = posErrorWords.filter(x => x.en !== w.en);
-      updateStats();
-    }
-
-    // أعد تصفير الأزرار وابدأ من جديد
-    posAnswered = false;
-    posFirstClickDone = false;
-    delete answersCache[currentIndex]?.posSelected;
-    delete answersCache[currentIndex]?.posCorrect;
-    delete answersCache[currentIndex]?.firstClick;
-    resetPosButtons();
-  }
 
   const w = words[currentIndex];
   const isCorrect = w.type.includes(selected);
   const isMultiType = w.type.length > 1;
 
+  // ── إذا أجاب مسبقاً → أعد تصفير وابدأ من جديد (تغيير الإجابة) ──
+  if (posAnswered) {
+    // تراجع عن الخطأ السابق
+    if (answersCache[currentIndex]?.posCorrect === false) {
+      posErrorCount = Math.max(0, posErrorCount - 1);
+      posErrorWords = posErrorWords.filter(x => x.en !== w.en);
+      updateStats();
+    }
+    posAnswered = false;
+    posFirstClickDone = false;
+    if (answersCache[currentIndex]) {
+      delete answersCache[currentIndex].posSelected;
+      delete answersCache[currentIndex].posCorrect;
+      delete answersCache[currentIndex].firstClick;
+    }
+    resetPosButtons();
+  }
+
   // ── كلمة بنوع واحد ──
   if (!isMultiType) {
     posAnswered = true;
-    document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
+    // لون الزر المختار فقط — لا نعطّل بقية الأزرار لإتاحة التغيير
+    document.querySelectorAll('.btn-pos').forEach(b => {
+      b.disabled = false;
+      if (b.dataset.pos !== selected) b.className = 'btn-pos';
+    });
     if (isCorrect) {
       btn.className = 'btn-pos correct';
     } else {
@@ -1593,6 +1596,7 @@ function handlePosClick(selected, btn) {
       posErrorCount++;
       if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
+      // أظهر الصحيح
       w.type.forEach(t => {
         const cb = posGrid.querySelector(`[data-pos="${t}"]`);
         if (cb) cb.className = 'btn-pos correct';
@@ -1608,29 +1612,22 @@ function handlePosClick(selected, btn) {
   if (!posFirstClickDone) {
     posFirstClickDone = true;
     btn.disabled = true;
-    if (isCorrect) {
-      btn.className = 'btn-pos correct';
-    } else {
-      btn.className = 'btn-pos wrong';
+    btn.className = isCorrect ? 'btn-pos correct' : 'btn-pos wrong';
+    if (!isCorrect) {
       posErrorCount++;
       if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
     }
     if (!answersCache[currentIndex]) answersCache[currentIndex] = {};
     answersCache[currentIndex].firstClick = { pos: selected, correct: isCorrect };
-
   } else {
     posAnswered = true;
     btn.disabled = true;
-    if (isCorrect) {
-      btn.className = 'btn-pos correct';
-    } else {
-      btn.className = 'btn-pos wrong';
-      if (!posErrorWords.find(x => x.en === w.en)) {
-        posErrorCount++;
-        posErrorWords.push(w);
-        updateStats();
-      }
+    btn.className = isCorrect ? 'btn-pos correct' : 'btn-pos wrong';
+    if (!isCorrect && !posErrorWords.find(x => x.en === w.en)) {
+      posErrorCount++;
+      posErrorWords.push(w);
+      updateStats();
     }
     document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
     w.type.forEach(t => {
