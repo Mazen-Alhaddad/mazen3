@@ -1154,6 +1154,8 @@ function init() {
   buildPosGrid();
   bindEvents();
   registerSW();
+  // استعادة التقدم عند فتح الصفحة
+  loadSavedState();
 }
 
 function buildPosGrid() {
@@ -1225,6 +1227,66 @@ function handleFileUpload(e) {
   reader.readAsText(file, 'UTF-8');
 }
 
+// ══════════════════════════════
+//  حفظ واستعادة التقدم
+// ══════════════════════════════
+const SAVE_KEY = 'crescent_quiz_state';
+
+function saveState() {
+  try {
+    const state = {
+      words,
+      currentIndex,
+      isReversed,
+      correctCount,
+      wrongCount,
+      posErrorCount,
+      wrongWords,
+      posErrorWords,
+      answersCache
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadSavedState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s.words || !s.words.length) return false;
+
+    words        = s.words;
+    currentIndex = s.currentIndex || 0;
+    isReversed   = s.isReversed || false;
+    correctCount = s.correctCount || 0;
+    wrongCount   = s.wrongCount || 0;
+    posErrorCount= s.posErrorCount || 0;
+    wrongWords   = s.wrongWords || [];
+    posErrorWords= s.posErrorWords || [];
+    answersCache = s.answersCache || {};
+
+    // استعادة وضع العكس
+    toggleReverse.classList.toggle('active', isReversed);
+    toggleLabel.textContent = isReversed ? 'AR→EN' : 'EN→AR';
+
+    updateStats();
+    emptyState.style.display = 'none';
+    resultsScreen.classList.remove('show');
+    quizArea.style.display = 'block';
+    progressBlock.style.display = 'block';
+    showWord();
+    showToast('✅ تم استعادة تقدمك السابق', 'green');
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function clearSavedState() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+}
+
 function loadWords(data) {
   words = [...data].sort(() => Math.random() - 0.5);
   currentIndex = 0;
@@ -1240,6 +1302,7 @@ function loadWords(data) {
   quizArea.style.display = 'block';
   progressBlock.style.display = 'block';
   showWord();
+  saveState();
 }
 
 // ══════════════════════════════
@@ -1392,6 +1455,7 @@ function evalMeaning(knew) {
 
   updateStats();
   checkNextReady();
+  saveState();
 }
 
 function savePosToCache(selectedPos, isCorrect) {
@@ -1424,6 +1488,7 @@ function handlePosClick(selected, btn) {
     }
     savePosToCache(selected, isCorrect);
     checkNextReady();
+    saveState();
     return;
   }
 
@@ -1463,6 +1528,7 @@ function handlePosClick(selected, btn) {
     });
     savePosToCache(selected, isCorrect);
     checkNextReady();
+    saveState();
   }
 }
 
@@ -1483,12 +1549,14 @@ function nextWord() {
     return;
   }
   showWord();
+  saveState();
 }
 
 function prevWord() {
   if (currentIndex <= 0) return;
   currentIndex--;
   showWord();
+  saveState();
 }
 
 // ══════════════════════════════
@@ -1562,6 +1630,7 @@ function showResults() {
 }
 
 function restartQuiz() {
+  clearSavedState();
   loadWords(words);
 }
 
