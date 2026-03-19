@@ -1154,7 +1154,6 @@ function init() {
   buildPosGrid();
   bindEvents();
   registerSW();
-  // استعادة التقدم عند فتح الصفحة
   loadSavedState();
 }
 
@@ -1227,6 +1226,7 @@ function handleFileUpload(e) {
   reader.readAsText(file, 'UTF-8');
 }
 
+
 // ══════════════════════════════
 //  حفظ واستعادة التقدم
 // ══════════════════════════════
@@ -1235,15 +1235,9 @@ const SAVE_KEY = 'crescent_quiz_state';
 function saveState() {
   try {
     const state = {
-      words,
-      currentIndex,
-      isReversed,
-      correctCount,
-      wrongCount,
-      posErrorCount,
-      wrongWords,
-      posErrorWords,
-      answersCache
+      words, currentIndex, isReversed,
+      correctCount, wrongCount, posErrorCount,
+      wrongWords, posErrorWords, answersCache
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
   } catch(e) {}
@@ -1255,21 +1249,17 @@ function loadSavedState() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     if (!s.words || !s.words.length) return false;
-
-    words        = s.words;
-    currentIndex = s.currentIndex || 0;
-    isReversed   = s.isReversed || false;
-    correctCount = s.correctCount || 0;
-    wrongCount   = s.wrongCount || 0;
-    posErrorCount= s.posErrorCount || 0;
-    wrongWords   = s.wrongWords || [];
-    posErrorWords= s.posErrorWords || [];
-    answersCache = s.answersCache || {};
-
-    // استعادة وضع العكس
+    words         = s.words;
+    currentIndex  = s.currentIndex  || 0;
+    isReversed    = s.isReversed    || false;
+    correctCount  = s.correctCount  || 0;
+    wrongCount    = s.wrongCount    || 0;
+    posErrorCount = s.posErrorCount || 0;
+    wrongWords    = s.wrongWords    || [];
+    posErrorWords = s.posErrorWords || [];
+    answersCache  = s.answersCache  || {};
     toggleReverse.classList.toggle('active', isReversed);
     toggleLabel.textContent = isReversed ? 'AR→EN' : 'EN→AR';
-
     updateStats();
     emptyState.style.display = 'none';
     resultsScreen.classList.remove('show');
@@ -1278,9 +1268,7 @@ function loadSavedState() {
     showWord();
     showToast('✅ تم استعادة تقدمك السابق', 'green');
     return true;
-  } catch(e) {
-    return false;
-  }
+  } catch(e) { return false; }
 }
 
 function clearSavedState() {
