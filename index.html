@@ -1165,6 +1165,7 @@ let answersCache = {}; // { index: { knew, posSelected, posAnswered } }
 let meaningEvaluated = false;
 let posAnswered = false;
 let posFirstClickDone = false;
+let isRevisiting = false;
 let deferredPrompt = null;
 
 // ── DOM refs ──
@@ -1356,6 +1357,7 @@ function clearSavedState() {
 }
 
 function loadWords(data) {
+  isRevisiting = false;
   words = [...data].sort(() => Math.random() - 0.5);
   currentIndex = 0;
   correctCount = 0;
@@ -1383,6 +1385,9 @@ function showWord() {
   meaningEvaluated = false;
   posAnswered = false;
   posFirstClickDone = false;
+  // isVisitingPrev يُحدَّث من prevWord/nextWord
+  // إذا انتقلنا للأمام لبطاقة جديدة لم تُجَب → ليست مراجعة
+  if (!answersCache[currentIndex]) isRevisiting = false;
 
   // Card index & badges
   cardIndex.textContent = `#${currentIndex + 1}`;
@@ -1447,9 +1452,9 @@ function showWord() {
         btnDidnt.className = 'btn-eval btn-wrong selected';
         btnKnew.className = 'btn-eval btn-correct';
       }
-      // تبقى مفعّلة للتغيير
-      btnKnew.disabled = false;
-      btnDidnt.disabled = false;
+      // مقفل عند المراجعة، مفتوح عند البطاقة الحالية
+      btnKnew.disabled = isRevisiting;
+      btnDidnt.disabled = isRevisiting;
     }
 
     // استعادة POS
@@ -1457,18 +1462,19 @@ function showWord() {
       posAnswered = true;
       const w2 = words[currentIndex];
       document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
-      // أظهر الإجابة المختارة
       const selectedBtn = posGrid.querySelector(`[data-pos="${cached.posSelected}"]`);
       if (selectedBtn) selectedBtn.className = cached.posCorrect ? 'btn-pos correct' : 'btn-pos wrong';
-      // أظهر الإجابات الصحيحة
       w2.type.forEach(t => {
         const cb = posGrid.querySelector(`[data-pos="${t}"]`);
         if (cb && cb.className === 'btn-pos') cb.className = 'btn-pos correct';
       });
-      // أظهر النقرة الأولى في حالة النوعين
       if (cached.firstClick) {
         const fc = posGrid.querySelector(`[data-pos="${cached.firstClick.pos}"]`);
         if (fc) fc.className = cached.firstClick.correct ? 'btn-pos correct' : 'btn-pos wrong';
+      }
+      // POS دائماً مقفل في المراجعة، مفتوح للتغيير في البطاقة الحالية
+      if (isRevisiting) {
+        document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
       }
     }
 
@@ -1495,6 +1501,7 @@ function revealTranslation() {
 //  MEANING EVALUATION
 // ══════════════════════════════
 function evalMeaning(knew) {
+  if (isRevisiting) return; // مقفل عند المراجعة
   // كشف الترجمة تلقائياً
   translationBlock.classList.add('revealed');
 
@@ -1541,14 +1548,41 @@ function savePosToCache(selectedPos, isCorrect) {
   answersCache[currentIndex].posSelected = selectedPos;
   answersCache[currentIndex].posCorrect  = isCorrect;
 }
+
+function resetPosButtons() {
+  document.querySelectorAll('.btn-pos').forEach(b => {
+    b.disabled = false;
+    b.className = 'btn-pos';
+  });
+}
+
 function handlePosClick(selected, btn) {
-  if (posAnswered) return;
+  if (isRevisiting) return; // مقفل على البطاقات السابقة
+  if (posAnswered) {
+    // السماح بتغيير الإجابة — أعد تصفير ثم أعد الإجابة
+    const w = words[currentIndex];
+
+    // تراجع عن الخطأ السابق إن وجد
+    if (answersCache[currentIndex]?.posCorrect === false) {
+      posErrorCount = Math.max(0, posErrorCount - 1);
+      posErrorWords = posErrorWords.filter(x => x.en !== w.en);
+      updateStats();
+    }
+
+    // أعد تصفير الأزرار وابدأ من جديد
+    posAnswered = false;
+    posFirstClickDone = false;
+    delete answersCache[currentIndex]?.posSelected;
+    delete answersCache[currentIndex]?.posCorrect;
+    delete answersCache[currentIndex]?.firstClick;
+    resetPosButtons();
+  }
 
   const w = words[currentIndex];
   const isCorrect = w.type.includes(selected);
   const isMultiType = w.type.length > 1;
 
-  // ── كلمة بنوع واحد: انتهى فوراً ──
+  // ── كلمة بنوع واحد ──
   if (!isMultiType) {
     posAnswered = true;
     document.querySelectorAll('.btn-pos').forEach(b => b.disabled = true);
@@ -1570,7 +1604,7 @@ function handlePosClick(selected, btn) {
     return;
   }
 
-  // ── كلمة بنوعين: نقرتان دائماً ──
+  // ── كلمة بنوعين: نقرتان ──
   if (!posFirstClickDone) {
     posFirstClickDone = true;
     btn.disabled = true;
@@ -1582,7 +1616,6 @@ function handlePosClick(selected, btn) {
       if (!posErrorWords.find(x => x.en === w.en)) posErrorWords.push(w);
       updateStats();
     }
-    // احفظ النقرة الأولى مبدئياً
     if (!answersCache[currentIndex]) answersCache[currentIndex] = {};
     answersCache[currentIndex].firstClick = { pos: selected, correct: isCorrect };
 
@@ -1621,6 +1654,7 @@ function checkNextReady() {
 //  NAVIGATION
 // ══════════════════════════════
 function nextWord() {
+  isRevisiting = false;
   currentIndex++;
   if (currentIndex >= words.length) {
     showResults();
@@ -1632,6 +1666,7 @@ function nextWord() {
 
 function prevWord() {
   if (currentIndex <= 0) return;
+  isRevisiting = true;
   currentIndex--;
   showWord();
   saveState();
