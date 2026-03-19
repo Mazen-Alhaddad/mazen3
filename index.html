@@ -1598,16 +1598,15 @@ function handlePosClick(selected, btn) {
       delete answersCache[currentIndex].posCorrect;
       delete answersCache[currentIndex].firstClick;
     }
-    // أبقِ الخاطئة السابقة ظاهرة بلون مخفف
-    const prevSelected = posGrid.querySelector('.btn-pos.wrong, .btn-pos.correct');
+    // أبقِ الزر الخاطئ الذي اختاره المستخدم فقط بلون مخفف
+    const prevWrong = answersCache[currentIndex]?.posSelected;
     document.querySelectorAll('.btn-pos').forEach(b => {
-      if (b.classList.contains('wrong')) {
+      if (prevWrong && b.dataset.pos === prevWrong) {
         b.className = 'btn-pos wrong-prev';
-        b.disabled = false;
       } else {
         b.className = 'btn-pos';
-        b.disabled = false;
       }
+      b.disabled = false;
     });
   }
 
