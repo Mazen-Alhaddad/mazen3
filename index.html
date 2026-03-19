@@ -1775,13 +1775,26 @@ function speakCurrentWord() {
   speak(text);
 }
 
+function getBritishVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('daniel')) ||
+    voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('kate'))   ||
+    voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('oliver')) ||
+    voices.find(v => v.lang === 'en-GB') ||
+    null
+  );
+}
+
 function speak(text) {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'en-US';
+  utt.lang = 'en-GB';
   utt.rate = 0.9;
   utt.pitch = 1;
+  const britishVoice = getBritishVoice();
+  if (britishVoice) utt.voice = britishVoice;
 
   const btn = $('btnTts');
   btn.classList.add('speaking');
@@ -1794,8 +1807,10 @@ function speakWord(text) {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'en-US';
+  utt.lang = 'en-GB';
   utt.rate = 0.9;
+  const britishVoice = getBritishVoice();
+  if (britishVoice) utt.voice = britishVoice;
   window.speechSynthesis.speak(utt);
 }
 
