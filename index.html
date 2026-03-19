@@ -883,6 +883,44 @@
       color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0 4px;
     }
 
+
+    /* ══════════ RESUME BANNER ══════════ */
+    .resume-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(63,185,80,.08);
+      border: 1px solid rgba(63,185,80,.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+    .resume-banner.show { display: flex; }
+    .resume-banner-text { flex: 1; }
+    .resume-banner-text strong { color: var(--green); display: block; font-size: 0.8rem; margin-bottom: 2px; }
+    .resume-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-resume {
+      background: var(--green-dim);
+      border: none; border-radius: 6px;
+      padding: 5px 12px; color: #fff;
+      font-size: 0.72rem; cursor: pointer;
+      white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .btn-resume-discard {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px; color: var(--text-muted);
+      font-size: 0.72rem; cursor: pointer;
+      white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .btn-resume-discard:hover { border-color: var(--red); color: var(--red); }
+
     /* ══════════ RESPONSIVE ══════════ */
     @media (max-width: 420px) {
       .pos-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -902,6 +940,19 @@
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn-install" id="btnInstall">تثبيت</button>
       <button class="btn-install-close" id="btnInstallClose">✕</button>
+    </div>
+  </div>
+
+
+  <!-- RESUME BANNER -->
+  <div class="resume-banner" id="resumeBanner">
+    <div class="resume-banner-text">
+      <strong>📚 لديك جلسة سابقة</strong>
+      <span id="resumeInfo">هل تريد المتابعة من حيث توقفت؟</span>
+    </div>
+    <div class="resume-actions">
+      <button class="btn-resume" id="btnResume">استعادة</button>
+      <button class="btn-resume-discard" id="btnResumeDiscard">بدء جديد</button>
     </div>
   </div>
 
@@ -1154,7 +1205,21 @@ function init() {
   buildPosGrid();
   bindEvents();
   registerSW();
-  loadSavedState();
+  // تحميل ملف JSON المحفوظ تلقائياً
+  try {
+    const savedJson = localStorage.getItem('crescent_quiz_json');
+    if (savedJson) {
+      const parsed = JSON.parse(savedJson);
+      if (Array.isArray(parsed) && parsed.length) {
+        window._savedJsonData = parsed;
+      }
+    }
+  } catch(e) {}
+  // عرض بانر الاستعادة إن وجد
+  if (!loadSavedState() && window._savedJsonData) {
+    // JSON موجود لكن لا توجد جلسة محفوظة → حمّله مباشرة
+    loadWords(window._savedJsonData);
+  }
 }
 
 function buildPosGrid() {
@@ -1181,6 +1246,8 @@ function bindEvents() {
   btnTopNext.addEventListener('click', nextWord);
   btnRestart.addEventListener('click', restartQuiz);
   $('btnTts').addEventListener('click', speakCurrentWord);
+  $('btnResume').addEventListener('click', applyPendingState);
+  $('btnResumeDiscard').addEventListener('click', () => { clearSavedState(); window._pendingState = null; $('resumeBanner').classList.remove('show'); });
   $('boxWrong').addEventListener('click', () => toggleLog('wrong'));
   $('boxPos').addEventListener('click',   () => toggleLog('pos'));
 
@@ -1216,6 +1283,7 @@ function handleFileUpload(e) {
       // Validate
       const valid = data.filter(w => w.en && w.ar && Array.isArray(w.type) && w.type.length);
       if (!valid.length) throw new Error('لم يتم العثور على كلمات صالحة');
+      localStorage.setItem('crescent_quiz_json', JSON.stringify(valid));
       loadWords(valid);
       showToast(`✅ تم تحميل ${valid.length} كلمة بنجاح`, 'green');
     } catch (err) {
@@ -1249,26 +1317,38 @@ function loadSavedState() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     if (!s.words || !s.words.length) return false;
-    words         = s.words;
-    currentIndex  = s.currentIndex  || 0;
-    isReversed    = s.isReversed    || false;
-    correctCount  = s.correctCount  || 0;
-    wrongCount    = s.wrongCount    || 0;
-    posErrorCount = s.posErrorCount || 0;
-    wrongWords    = s.wrongWords    || [];
-    posErrorWords = s.posErrorWords || [];
-    answersCache  = s.answersCache  || {};
-    toggleReverse.classList.toggle('active', isReversed);
-    toggleLabel.textContent = isReversed ? 'AR→EN' : 'EN→AR';
-    updateStats();
-    emptyState.style.display = 'none';
-    resultsScreen.classList.remove('show');
-    quizArea.style.display = 'block';
-    progressBlock.style.display = 'block';
-    showWord();
-    showToast('✅ تم استعادة تقدمك السابق', 'green');
+    // حفظ البيانات مؤقتاً وعرض البانر فقط
+    window._pendingState = s;
+    const done = s.currentIndex || 0;
+    const total = s.words.length;
+    $('resumeInfo').textContent = `الكلمة ${done + 1} من ${total} — هل تريد المتابعة؟`;
+    $('resumeBanner').classList.add('show');
     return true;
   } catch(e) { return false; }
+}
+
+function applyPendingState() {
+  const s = window._pendingState;
+  if (!s) return;
+  words         = s.words;
+  currentIndex  = s.currentIndex  || 0;
+  isReversed    = s.isReversed    || false;
+  correctCount  = s.correctCount  || 0;
+  wrongCount    = s.wrongCount    || 0;
+  posErrorCount = s.posErrorCount || 0;
+  wrongWords    = s.wrongWords    || [];
+  posErrorWords = s.posErrorWords || [];
+  answersCache  = s.answersCache  || {};
+  window._pendingState = null;
+  toggleReverse.classList.toggle('active', isReversed);
+  toggleLabel.textContent = isReversed ? 'AR→EN' : 'EN→AR';
+  updateStats();
+  emptyState.style.display = 'none';
+  resultsScreen.classList.remove('show');
+  quizArea.style.display = 'block';
+  progressBlock.style.display = 'block';
+  $('resumeBanner').classList.remove('show');
+  showWord();
 }
 
 function clearSavedState() {

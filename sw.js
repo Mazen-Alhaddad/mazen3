@@ -3,23 +3,19 @@
 //  ⚠️  زد رقم CACHE_VERSION عند كل تحديث للكود
 // ══════════════════════════════════════════════════
 
-const CACHE_VERSION = 'crescent-quiz-v1.0.0';
+const CACHE_VERSION = 'crescent-quiz-v2.0.0';
 
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
-  '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap'
+  '/index.html'
 ];
 
-// ── Install: cache static assets ──
+// ── Install: cache index.html immediately ──
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_VERSION).then(cache => {
-      return cache.addAll(STATIC_ASSETS).catch(err => {
-        console.warn('[SW] Failed to cache some assets:', err);
-      });
+      return cache.addAll(STATIC_ASSETS).catch(() => {});
     })
   );
 });
@@ -36,19 +32,12 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── Fetch: cache-first for app assets, network-first for JSON data ──
+// ── Fetch: cache-first for app, network-first for fonts ──
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Don't cache cross-origin requests (except Google Fonts)
-  if (url.origin !== self.location.origin &&
-      !url.hostname.includes('fonts.gstatic.com') &&
-      !url.hostname.includes('fonts.googleapis.com')) {
-    return;
-  }
-
-  // Network-first for navigation
-  if (event.request.mode === 'navigate') {
+  // Google Fonts: network first, fallback to cache
+  if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
@@ -56,22 +45,24 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_VERSION).then(cache => cache.put(event.request, clone));
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Cache-first for static assets
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      });
-    })
-  );
+  // App files: cache-first (works offline)
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_VERSION).then(cache => cache.put(event.request, clone));
+          }
+          return response;
+        }).catch(() => caches.match('/index.html'));
+      })
+    );
+  }
 });
