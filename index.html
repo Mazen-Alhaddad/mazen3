@@ -1442,15 +1442,14 @@ function showWord() {
       translationBlock.classList.add('revealed');
       if (cached.knew) {
         btnKnew.className = 'btn-eval btn-correct selected';
-        btnKnew.disabled = false;
-        btnDidnt.disabled = true;
+        btnDidnt.className = 'btn-eval btn-wrong';
       } else {
         btnDidnt.className = 'btn-eval btn-wrong selected';
-        btnDidnt.disabled = false;
-        btnKnew.disabled = true;
+        btnKnew.className = 'btn-eval btn-correct';
       }
-      btnKnew.disabled = true;
-      btnDidnt.disabled = true;
+      // تبقى مفعّلة للتغيير
+      btnKnew.disabled = false;
+      btnDidnt.disabled = false;
     }
 
     // استعادة POS
@@ -1496,28 +1495,39 @@ function revealTranslation() {
 //  MEANING EVALUATION
 // ══════════════════════════════
 function evalMeaning(knew) {
-  if (meaningEvaluated) return;
-  meaningEvaluated = true;
-
-  // كشف الترجمة تلقائياً عند الإجابة
+  // كشف الترجمة تلقائياً
   translationBlock.classList.add('revealed');
+
+  // إذا كانت هناك إجابة سابقة → تراجع عنها أولاً
+  if (meaningEvaluated) {
+    const prev = answersCache[currentIndex]?.knew;
+    if (prev === knew) return; // نفس الإجابة، لا شيء يتغير
+    // تصحيح العدادات
+    if (prev === true)  { correctCount--; }
+    if (prev === false) {
+      wrongCount--;
+      wrongWords = wrongWords.filter(w => w.en !== words[currentIndex].en);
+    }
+  }
+
+  meaningEvaluated = true;
 
   if (knew) {
     correctCount++;
     btnKnew.className = 'btn-eval btn-correct selected';
-    btnKnew.disabled = true;
     btnDidnt.className = 'btn-eval btn-wrong';
-    btnDidnt.disabled = true;
   } else {
     wrongCount++;
     wrongWords.push(words[currentIndex]);
     btnDidnt.className = 'btn-eval btn-wrong selected';
-    btnDidnt.disabled = true;
     btnKnew.className = 'btn-eval btn-correct';
-    btnKnew.disabled = true;
   }
 
-  // حفظ الإجابة في الكاش
+  // الأزرار تبقى مفعّلة للتغيير
+  btnKnew.disabled = false;
+  btnDidnt.disabled = false;
+
+  // حفظ الإجابة
   if (!answersCache[currentIndex]) answersCache[currentIndex] = {};
   answersCache[currentIndex].knew = knew;
 
