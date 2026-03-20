@@ -4,12 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crescent English Quiz Pro</title>
-  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d1117" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: local('JetBrains Mono'), local('Cascadia Code'), local('Fira Code'), local('Consolas'), local('Courier New');
+      font-weight: 400 700;
+    }
+    @font-face {
+      font-family: 'Noto Kufi Arabic';
+      src: local('Noto Kufi Arabic'), local('Noto Sans Arabic'), local('Segoe UI'), local('Tahoma'), local('Arial');
+      font-weight: 400 700;
+    }
+  </style>
 
   <style>
     :root {
@@ -334,7 +343,8 @@
       font-weight: 600;
       color: var(--text-primary);
       filter: blur(8px);
-      transition: filter 0.3s;
+      transition: filter 0.25s;
+      user-select: none;
       pointer-events: none;
     }
     .translation-text.en { font-family: 'JetBrains Mono', monospace; }
@@ -1401,23 +1411,26 @@ function showWord() {
     });
   }
 
+  // أمسح النص فوراً وأزل revealed قبل كتابة المحتوى الجديد
+  translationBlock.classList.remove('revealed');
+  translationText.textContent = '';
+
   // Main word & sub
   if (isReversed) {
     wordMain.textContent = w.ar;
     wordMain.className = 'word-main arabic';
     wordSub.textContent = 'اضغط للكشف عن الإنجليزية';
     translationText.className = 'translation-text en';
-    translationText.textContent = w.en;
+    requestAnimationFrame(() => { translationText.textContent = w.en; });
   } else {
     wordMain.textContent = w.en;
     wordMain.className = 'word-main';
     wordSub.textContent = 'اضغط للكشف • أو أجب مباشرة';
     translationText.className = 'translation-text';
-    translationText.textContent = w.ar;
+    requestAnimationFrame(() => { translationText.textContent = w.ar; });
   }
 
-  // Reset translation
-  translationBlock.classList.remove('revealed');
+  // Reset translation — already done above
 
   // Reset eval buttons - متاحة من البداية
   btnKnew.disabled = false;
@@ -1775,28 +1788,53 @@ function speakCurrentWord() {
   speak(text);
 }
 
-function speak(text) {
+// ── تحميل الأصوات مسبقاً عند الجاهزية ──
+let cachedBritishVoice = null;
+
+function loadVoices() {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+  cachedBritishVoice =
+    voices.find(v => v.lang === 'en-GB' && /daniel/i.test(v.name))  ||
+    voices.find(v => v.lang === 'en-GB' && /kate/i.test(v.name))    ||
+    voices.find(v => v.lang === 'en-GB' && /oliver/i.test(v.name))  ||
+    voices.find(v => v.lang === 'en-GB' && /serena/i.test(v.name))  ||
+    voices.find(v => v.lang === 'en-GB') ||
+    voices.find(v => v.lang.startsWith('en-GB')) ||
+    null;
+}
+
+// تُستدعى مباشرة وعند حدث voiceschanged (مطلوب في Chrome)
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function doSpeak(text, btn) {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
+
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'en-US';
-  utt.rate = 0.9;
+  utt.lang  = 'en-GB';
+  utt.rate  = 0.9;
   utt.pitch = 1;
 
-  const btn = $('btnTts');
-  btn.classList.add('speaking');
-  utt.onend = () => btn.classList.remove('speaking');
-  utt.onerror = () => btn.classList.remove('speaking');
+  if (cachedBritishVoice) {
+    utt.voice = cachedBritishVoice;
+  }
+
+  if (btn) {
+    btn.classList.add('speaking');
+    utt.onend  = () => btn.classList.remove('speaking');
+    utt.onerror = () => btn.classList.remove('speaking');
+  }
   window.speechSynthesis.speak(utt);
 }
 
+function speak(text) {
+  doSpeak(text, $('btnTts'));
+}
+
 function speakWord(text) {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'en-US';
-  utt.rate = 0.9;
-  window.speechSynthesis.speak(utt);
+  doSpeak(text, null);
 }
 
 // ══════════════════════════════
@@ -1850,11 +1888,7 @@ function buildLog(type) {
 //  SERVICE WORKER
 // ══════════════════════════════
 function registerSW() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    });
-  }
+  // Service worker removed — fully offline, no external server needed
 }
 
 // ── Start ──
