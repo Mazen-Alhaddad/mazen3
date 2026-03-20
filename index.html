@@ -343,13 +343,17 @@
       font-weight: 600;
       color: var(--text-primary);
       filter: blur(8px);
-      transition: filter 0.25s;
+      transition: none;
       user-select: none;
       pointer-events: none;
     }
     .translation-text.en { font-family: 'JetBrains Mono', monospace; }
 
-    .translation-block.revealed .translation-text { filter: blur(0); }
+    /* الكشف فقط يكون له animation، الإخفاء فوري */
+    .translation-block.revealed .translation-text {
+      filter: blur(0);
+      transition: filter 0.25s;
+    }
 
     .reveal-hint {
       font-size: 0.68rem;
@@ -1422,13 +1426,13 @@ function showWord() {
     wordMain.className = 'word-main arabic';
     wordSub.textContent = 'اضغط للكشف عن الإنجليزية';
     translationText.className = 'translation-text en';
-    requestAnimationFrame(() => { translationText.textContent = w.en; });
+    translationText.textContent = w.en;
   } else {
     wordMain.textContent = w.en;
     wordMain.className = 'word-main';
     wordSub.textContent = 'اضغط للكشف • أو أجب مباشرة';
     translationText.className = 'translation-text';
-    requestAnimationFrame(() => { translationText.textContent = w.ar; });
+    translationText.textContent = w.ar;
   }
 
   // Reset translation — already done above
